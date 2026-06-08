@@ -7,7 +7,7 @@
 
 ## 🚀 Live Demo
 
-🔗 https://IAaqib78.github.io/amazon-sales-dashboard/
+ 
 
 ## 📊 Project Overview
 
