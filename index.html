@@ -1,0 +1,1650 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Amazon Sales Analytics — Executive Dashboard | Portfolio</title>
+<meta name="description" content="An enterprise-grade Amazon Sales Analytics dashboard built in Excel — showcased as a portfolio project with executive KPIs, data pipelines, and business insights." />
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<!-- Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+<style>
+/* =========================================================
+   THEME TOKENS
+   ========================================================= */
+:root{
+  --bg-0:#06070b;
+  --bg-1:#0b0d14;
+  --bg-2:#11141d;
+  --surface:rgba(255,255,255,0.04);
+  --surface-2:rgba(255,255,255,0.06);
+  --border:rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.14);
+  --text:#e8ecf3;
+  --text-dim:#a3acbd;
+  --text-mute:#6b7384;
+
+  --brand:#ff9a1f;       /* Amazon-ish amber */
+  --brand-2:#ffd166;
+  --accent:#7c5cff;      /* electric violet */
+  --accent-2:#22d3ee;    /* cyan */
+  --success:#34d399;
+  --danger:#f87171;
+  --warning:#fbbf24;
+
+  --grad-1: linear-gradient(135deg,#ff9a1f 0%,#ff5e3a 50%,#7c5cff 100%);
+  --grad-2: linear-gradient(135deg,#22d3ee 0%,#7c5cff 100%);
+  --grad-3: linear-gradient(135deg,#ffd166 0%,#ff9a1f 100%);
+  --grad-text: linear-gradient(90deg,#ffd166,#ff9a1f 40%,#ff5e3a 70%,#7c5cff);
+
+  --shadow-1: 0 10px 40px rgba(0,0,0,0.45);
+  --shadow-2: 0 30px 80px rgba(124,92,255,0.18);
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 32px;
+
+  --container: 1240px;
+}
+
+/* =========================================================
+   RESET
+   ========================================================= */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg-0);
+  color:var(--text);
+  line-height:1.6;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+ul{list-style:none}
+
+::selection{background:var(--brand);color:#1a1004}
+
+/* Custom scrollbar */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:var(--bg-1)}
+::-webkit-scrollbar-thumb{
+  background:linear-gradient(180deg,#2a2e3c,#1a1d28);
+  border-radius:10px;
+  border:2px solid var(--bg-1);
+}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#3a3f50,#22262f)}
+
+/* =========================================================
+   BACKGROUND SCENE
+   ========================================================= */
+.bg-scene{
+  position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:
+    radial-gradient(1200px 600px at 80% -10%,rgba(255,154,31,0.12),transparent 60%),
+    radial-gradient(900px 500px at -10% 20%,rgba(124,92,255,0.14),transparent 60%),
+    radial-gradient(700px 400px at 50% 110%,rgba(34,211,238,0.10),transparent 60%),
+    var(--bg-0);
+}
+.bg-grid{
+  position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:0.35;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(ellipse at 50% 30%,black 30%,transparent 75%);
+  -webkit-mask-image:radial-gradient(ellipse at 50% 30%,black 30%,transparent 75%);
+}
+.bg-noise{
+  position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:0.04;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.6'/></svg>");
+}
+
+/* Floating orbs */
+.orb{position:fixed;border-radius:50%;filter:blur(90px);z-index:-1;opacity:0.55;pointer-events:none}
+.orb.o1{width:520px;height:520px;background:#ff9a1f;top:-160px;right:-120px;animation:float1 18s ease-in-out infinite}
+.orb.o2{width:480px;height:480px;background:#7c5cff;top:40%;left:-160px;animation:float2 22s ease-in-out infinite}
+.orb.o3{width:380px;height:380px;background:#22d3ee;bottom:-160px;right:20%;animation:float1 26s ease-in-out infinite reverse}
+
+@keyframes float1{
+  0%,100%{transform:translate(0,0) scale(1)}
+  50%{transform:translate(40px,-60px) scale(1.08)}
+}
+@keyframes float2{
+  0%,100%{transform:translate(0,0) scale(1)}
+  50%{transform:translate(-30px,50px) scale(1.05)}
+}
+
+/* =========================================================
+   CONTAINER & TYPOGRAPHY
+   ========================================================= */
+.container{
+  width:100%;max-width:var(--container);margin:0 auto;padding:0 28px;
+}
+
+h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif;font-weight:600;letter-spacing:-0.02em;line-height:1.15;color:#fff}
+h1{font-size:clamp(2.6rem,5.8vw,4.6rem);letter-spacing:-0.035em;font-weight:700}
+h2{font-size:clamp(2rem,3.6vw,3rem);letter-spacing:-0.03em}
+h3{font-size:clamp(1.25rem,1.6vw,1.5rem)}
+h4{font-size:1.05rem;font-weight:600}
+
+.gradient-text{
+  background:var(--grad-text);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+}
+
+.mono{font-family:'JetBrains Mono',monospace}
+
+p{color:var(--text-dim);font-size:1rem}
+.lead{font-size:1.125rem;color:var(--text-dim);max-width:680px}
+
+/* Section wrapper */
+section{padding:120px 0;position:relative}
+.section-header{margin-bottom:64px;max-width:780px}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 14px;border-radius:999px;
+  background:var(--surface);border:1px solid var(--border);
+  font-size:0.78rem;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--text-dim);font-weight:500;margin-bottom:20px;
+}
+.eyebrow .dot{
+  width:6px;height:6px;border-radius:50%;background:var(--brand);
+  box-shadow:0 0 0 4px rgba(255,154,31,0.18);
+  animation:pulseDot 2s ease-in-out infinite;
+}
+@keyframes pulseDot{
+  0%,100%{box-shadow:0 0 0 4px rgba(255,154,31,0.18)}
+  50%{box-shadow:0 0 0 8px rgba(255,154,31,0)}
+}
+
+/* Buttons */
+.btn{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:14px 24px;border-radius:999px;
+  font-weight:600;font-size:0.95rem;letter-spacing:-0.01em;
+  transition:transform .25s ease,box-shadow .25s ease,background .25s ease,color .25s ease;
+  border:1px solid transparent;will-change:transform;
+}
+.btn-primary{
+  background:var(--grad-1);color:#0e0a04;
+  box-shadow:0 10px 30px rgba(255,94,58,0.35),inset 0 1px 0 rgba(255,255,255,0.3);
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(255,94,58,0.55),inset 0 1px 0 rgba(255,255,255,0.4)}
+.btn-ghost{
+  background:var(--surface);border-color:var(--border-strong);color:#fff;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+.btn-ghost:hover{background:var(--surface-2);transform:translateY(-2px)}
+
+.btn i{transition:transform .25s ease}
+.btn:hover i.arrow{transform:translateX(4px)}
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  padding:18px 0;transition:padding .3s ease,background .3s ease,border-color .3s ease;
+}
+.nav.scrolled{
+  padding:12px 0;
+  background:rgba(8,9,14,0.72);
+  backdrop-filter:blur(18px) saturate(140%);
+  -webkit-backdrop-filter:blur(18px) saturate(140%);
+  border-bottom:1px solid var(--border);
+}
+.nav-inner{
+  display:flex;align-items:center;justify-content:space-between;gap:24px;
+}
+.brand{
+  display:flex;align-items:center;gap:12px;font-weight:700;font-size:1.05rem;
+  letter-spacing:-0.02em;
+}
+.brand-mark{
+  width:38px;height:38px;border-radius:11px;
+  background:var(--grad-1);
+  display:grid;place-items:center;color:#1a1004;font-weight:700;
+  box-shadow:0 8px 24px rgba(255,94,58,0.4),inset 0 1px 0 rgba(255,255,255,0.4);
+  position:relative;overflow:hidden;
+}
+.brand-mark::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(120deg,transparent 40%,rgba(255,255,255,0.5) 50%,transparent 60%);
+  transform:translateX(-120%);
+  animation:shine 4s ease-in-out infinite;
+}
+@keyframes shine{
+  0%,60%{transform:translateX(-120%)}
+  80%{transform:translateX(120%)}
+  100%{transform:translateX(120%)}
+}
+.brand-mark i{font-size:1.1rem;position:relative;z-index:1}
+.brand-name span{color:var(--text-dim);font-weight:500}
+
+.nav-links{display:flex;align-items:center;gap:4px}
+.nav-links a{
+  padding:9px 16px;border-radius:999px;font-size:0.9rem;
+  color:var(--text-dim);font-weight:500;transition:color .2s ease,background .2s ease;
+}
+.nav-links a:hover{color:#fff;background:var(--surface)}
+
+.nav-cta{display:flex;align-items:center;gap:10px}
+.nav-cta .btn{padding:10px 18px;font-size:0.85rem}
+
+.menu-toggle{display:none;width:42px;height:42px;border-radius:12px;background:var(--surface);border:1px solid var(--border);align-items:center;justify-content:center}
+.menu-toggle i{font-size:1.05rem}
+
+@media (max-width:960px){
+  .nav-links{display:none}
+  .nav-cta .btn-ghost{display:none}
+  .menu-toggle{display:inline-flex}
+}
+
+/* Mobile menu */
+.mobile-menu{
+  position:fixed;inset:0;z-index:99;background:rgba(8,9,14,0.96);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-size:1.4rem;font-weight:600;color:#fff;font-family:'Space Grotesk',sans-serif}
+.mobile-menu .close{position:absolute;top:18px;right:18px;width:42px;height:42px;border-radius:12px;background:var(--surface);border:1px solid var(--border);display:grid;place-items:center}
+
+/* =========================================================
+   HERO
+   ========================================================= */
+.hero{padding:170px 0 100px;position:relative;overflow:hidden}
+.hero-grid{
+  display:grid;grid-template-columns:1.05fr 0.95fr;gap:60px;align-items:center;
+}
+@media (max-width:1024px){.hero-grid{grid-template-columns:1fr;gap:48px}}
+
+.hero-badge{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:8px 14px;border-radius:999px;
+  background:var(--surface);border:1px solid var(--border);
+  font-size:0.82rem;color:var(--text-dim);font-weight:500;
+}
+.hero-badge .pill{
+  font-size:0.7rem;font-weight:700;letter-spacing:0.08em;
+  padding:3px 8px;border-radius:999px;
+  background:var(--grad-1);color:#1a1004;
+}
+
+.hero h1{margin:22px 0 24px}
+.hero h1 .stroke{
+  -webkit-text-stroke:1.5px rgba(255,255,255,0.65);color:transparent;
+  font-style:italic;font-weight:600;
+}
+
+.hero-sub{font-size:1.18rem;color:var(--text-dim);max-width:580px;margin-bottom:36px}
+
+.hero-cta{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:48px}
+
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;max-width:560px}
+.hero-stat{
+  padding:18px 20px;border-radius:var(--radius-md);
+  background:var(--surface);border:1px solid var(--border);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+.hero-stat .val{font-family:'Space Grotesk',sans-serif;font-size:1.6rem;font-weight:700;color:#fff;letter-spacing:-0.02em}
+.hero-stat .lbl{font-size:0.78rem;color:var(--text-mute);text-transform:uppercase;letter-spacing:0.1em;margin-top:4px}
+
+/* Hero visual — animated dashboard mock */
+.hero-visual{
+  position:relative;perspective:1400px;
+}
+.hero-card{
+  position:relative;border-radius:var(--radius-xl);
+  background:linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02));
+  border:1px solid var(--border-strong);
+  padding:22px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  box-shadow:var(--shadow-1),var(--shadow-2);
+  transform:rotateY(-6deg) rotateX(4deg);
+  animation:floatCard 8s ease-in-out infinite;
+}
+@keyframes floatCard{
+  0%,100%{transform:rotateY(-6deg) rotateX(4deg) translateY(0)}
+  50%{transform:rotateY(-3deg) rotateX(2deg) translateY(-12px)}
+}
+.hc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.hc-head .dots{display:flex;gap:6px}
+.hc-head .dots span{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.18)}
+.hc-head .dots span:first-child{background:#ff5e5e}
+.hc-head .dots span:nth-child(2){background:#ffbd2e}
+.hc-head .dots span:nth-child(3){background:#28c93f}
+.hc-head .lbl{font-size:0.74rem;color:var(--text-mute);font-family:'JetBrains Mono',monospace}
+
+.hc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.hc-kpi{
+  padding:14px;border-radius:14px;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+}
+.hc-kpi .lbl{font-size:0.68rem;color:var(--text-mute);text-transform:uppercase;letter-spacing:0.08em}
+.hc-kpi .val{font-family:'Space Grotesk',sans-serif;font-size:1.25rem;font-weight:700;color:#fff;margin:6px 0 4px}
+.hc-kpi .chg{font-size:0.72rem;font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.hc-kpi .chg.up{color:var(--success)}
+.hc-kpi .chg.down{color:var(--danger)}
+
+.hc-chart{
+  height:160px;border-radius:14px;
+  background:rgba(255,255,255,0.03);border:1px solid var(--border);
+  padding:14px;position:relative;overflow:hidden;
+}
+.hc-chart svg{width:100%;height:100%}
+.hc-chart .axis{stroke:rgba(255,255,255,0.08);stroke-width:1}
+.hc-chart .area{fill:url(#areaGrad)}
+.hc-chart .line{fill:none;stroke:url(#lineGrad);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+
+.hc-foot{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px;height:64px;align-items:end}
+.hc-foot .bar{
+  background:linear-gradient(180deg,#ff9a1f,#ff5e3a);
+  border-radius:6px 6px 2px 2px;opacity:0.85;
+  animation:barRise 1.2s ease forwards;transform-origin:bottom;transform:scaleY(0);
+}
+.hc-foot .bar:nth-child(1){animation-delay:.1s;height:55%}
+.hc-foot .bar:nth-child(2){animation-delay:.18s;height:75%}
+.hc-foot .bar:nth-child(3){animation-delay:.26s;height:42%}
+.hc-foot .bar:nth-child(4){animation-delay:.34s;height:88%}
+.hc-foot .bar:nth-child(5){animation-delay:.42s;height:62%}
+.hc-foot .bar:nth-child(6){animation-delay:.5s;height:95%;background:linear-gradient(180deg,#ffd166,#ff9a1f)}
+.hc-foot .bar:nth-child(7){animation-delay:.58s;height:70%}
+@keyframes barRise{to{transform:scaleY(1)}}
+
+/* Floating side cards */
+.float-card{
+  position:absolute;padding:14px 16px;border-radius:18px;
+  background:rgba(15,17,24,0.85);
+  border:1px solid var(--border-strong);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  box-shadow:var(--shadow-1);
+  display:flex;align-items:center;gap:12px;
+  animation:floatCard 6s ease-in-out infinite;
+}
+.float-card .icon{
+  width:38px;height:38px;border-radius:10px;display:grid;place-items:center;
+  background:var(--grad-2);color:#0a0d12;font-weight:700;
+}
+.float-card .t{font-size:0.78rem;color:var(--text-mute);text-transform:uppercase;letter-spacing:0.08em}
+.float-card .v{font-family:'Space Grotesk',sans-serif;font-weight:700;color:#fff;font-size:1.1rem}
+
+.fc1{top:-18px;left:-20px;animation-delay:.5s}
+.fc2{bottom:-14px;right:-10px;animation-delay:1.2s}
+.fc2 .icon{background:var(--grad-3);color:#1a1004}
+
+/* Marquee */
+.trust{
+  margin-top:80px;padding:24px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  overflow:hidden;
+}
+.trust-label{font-size:0.78rem;color:var(--text-mute);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:16px;text-align:center}
+.marquee{display:flex;gap:64px;animation:scroll 28s linear infinite;width:max-content}
+.marquee span{
+  font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:600;color:var(--text-mute);
+  white-space:nowrap;display:flex;align-items:center;gap:10px;
+}
+.marquee span i{color:var(--brand);font-size:1.1rem}
+@keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* =========================================================
+   DASHBOARD SHOWCASE
+   ========================================================= */
+.showcase-frame{
+  position:relative;border-radius:var(--radius-xl);
+  background:linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02));
+  border:1px solid var(--border-strong);
+  padding:20px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  box-shadow:var(--shadow-1),var(--shadow-2);
+}
+.showcase-frame::before{
+  content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;
+  background:linear-gradient(135deg,rgba(255,154,31,0.5),rgba(124,92,255,0.5),transparent);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;
+}
+.frame-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 6px 16px;border-bottom:1px solid var(--border);margin-bottom:16px;
+}
+.frame-bar .dots{display:flex;gap:6px}
+.frame-bar .dots span{width:11px;height:11px;border-radius:50%;background:rgba(255,255,255,0.16)}
+.frame-bar .dots span:first-child{background:#ff5e5e}
+.frame-bar .dots span:nth-child(2){background:#ffbd2e}
+.frame-bar .dots span:nth-child(3){background:#28c93f}
+.frame-bar .url{
+  flex:1;margin:0 18px;padding:7px 14px;border-radius:8px;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-mute);
+  display:flex;align-items:center;gap:10px;
+}
+.frame-bar .url i{color:var(--success);font-size:0.7rem}
+.frame-bar .meta{font-size:0.78rem;color:var(--text-mute);font-family:'JetBrains Mono',monospace}
+
+.dashboard-img-wrap{
+  border-radius:18px;overflow:hidden;position:relative;
+  background:linear-gradient(180deg,#10131c,#0a0c12);
+  min-height:420px;
+  display:grid;place-items:center;
+}
+.dashboard-img-wrap img{
+  width:100%;height:auto;display:block;
+}
+.placeholder{
+  width:100%;padding:60px 28px;
+  display:grid;place-items:center;gap:14px;text-align:center;
+}
+.placeholder .pic{
+  width:88px;height:88px;border-radius:22px;
+  background:var(--grad-1);display:grid;place-items:center;color:#1a1004;font-size:2rem;
+  box-shadow:0 18px 50px rgba(255,94,58,0.4);
+}
+.placeholder h4{font-size:1.3rem;color:#fff}
+.placeholder p{max-width:520px}
+.placeholder code{
+  font-family:'JetBrains Mono',monospace;font-size:0.85rem;
+  padding:8px 14px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--brand-2);
+}
+
+/* Showcase tabs */
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
+.tab{
+  padding:10px 18px;border-radius:999px;
+  background:var(--surface);border:1px solid var(--border);
+  font-size:0.86rem;font-weight:500;color:var(--text-dim);
+  transition:all .2s ease;
+}
+.tab:hover{color:#fff;border-color:var(--border-strong)}
+.tab.active{background:var(--grad-1);color:#1a1004;border-color:transparent;font-weight:600}
+
+/* =========================================================
+   EXECUTIVE SUMMARY
+   ========================================================= */
+.exec-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+@media (max-width:1024px){.exec-grid{grid-template-columns:1fr}}
+.exec-card{
+  padding:36px;border-radius:var(--radius-lg);
+  background:var(--surface);border:1px solid var(--border);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  position:relative;overflow:hidden;
+}
+.exec-card::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--grad-1);
+}
+.exec-card h3{margin-bottom:16px}
+.exec-card p{font-size:1.02rem;line-height:1.75}
+.exec-quote{
+  margin-top:24px;padding:20px;border-radius:14px;
+  background:rgba(255,154,31,0.06);border:1px solid rgba(255,154,31,0.18);
+  font-style:italic;color:#fff;font-size:1.04rem;
+}
+.exec-quote::before{content:"\201C";font-size:3rem;color:var(--brand);line-height:0.1;margin-right:8px;font-family:'Space Grotesk',sans-serif}
+
+.exec-list{display:grid;gap:14px;margin-top:24px}
+.exec-list li{
+  display:flex;align-items:flex-start;gap:14px;
+  padding:14px 16px;border-radius:12px;
+  background:rgba(255,255,255,0.03);border:1px solid var(--border);
+}
+.exec-list .b{
+  width:32px;height:32px;border-radius:9px;flex-shrink:0;
+  background:var(--grad-2);color:#06070b;display:grid;place-items:center;font-weight:700;
+}
+.exec-list strong{color:#fff;font-weight:600;display:block;margin-bottom:2px}
+.exec-list span{font-size:0.92rem;color:var(--text-dim)}
+
+/* =========================================================
+   KPI HIGHLIGHTS
+   ========================================================= */
+.kpi-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:20px;
+}
+@media (max-width:1024px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.kpi-grid{grid-template-columns:1fr}}
+
+.kpi{
+  padding:28px;border-radius:var(--radius-lg);
+  background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01));
+  border:1px solid var(--border);position:relative;overflow:hidden;
+  transition:transform .3s ease,border-color .3s ease;
+}
+.kpi:hover{transform:translateY(-6px);border-color:var(--border-strong)}
+.kpi::after{
+  content:"";position:absolute;top:-40%;right:-40%;width:180px;height:180px;border-radius:50%;
+  background:radial-gradient(circle,var(--brand),transparent 70%);opacity:0;
+  transition:opacity .4s ease;
+}
+.kpi:hover::after{opacity:0.18}
+.kpi .ico{
+  width:44px;height:44px;border-radius:12px;display:grid;place-items:center;
+  background:rgba(255,154,31,0.12);color:var(--brand);font-size:1.15rem;margin-bottom:18px;
+}
+.kpi:nth-child(2) .ico{background:rgba(124,92,255,0.12);color:var(--accent)}
+.kpi:nth-child(3) .ico{background:rgba(34,211,238,0.12);color:var(--accent-2)}
+.kpi:nth-child(4) .ico{background:rgba(52,211,153,0.12);color:var(--success)}
+
+.kpi .val{
+  font-family:'Space Grotesk',sans-serif;font-size:2.6rem;font-weight:700;
+  letter-spacing:-0.03em;color:#fff;line-height:1;
+}
+.kpi .lbl{font-size:0.85rem;color:var(--text-mute);margin-top:8px;letter-spacing:0.06em;text-transform:uppercase}
+.kpi .desc{font-size:0.92rem;color:var(--text-dim);margin-top:14px;line-height:1.55}
+.kpi .delta{
+  display:inline-flex;align-items:center;gap:4px;font-size:0.78rem;font-weight:600;
+  padding:4px 10px;border-radius:999px;margin-top:14px;
+  background:rgba(52,211,153,0.12);color:var(--success);
+}
+
+/* =========================================================
+   PIPELINE
+   ========================================================= */
+.pipeline{
+  position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:18px;
+}
+@media (max-width:1024px){.pipeline{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.pipeline{grid-template-columns:1fr}}
+
+.stage{
+  padding:24px 20px;border-radius:var(--radius-md);
+  background:var(--surface);border:1px solid var(--border);
+  position:relative;transition:all .3s ease;
+}
+.stage:hover{transform:translateY(-4px);border-color:var(--brand)}
+.stage .num{
+  font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--brand);
+  letter-spacing:0.16em;
+}
+.stage h4{margin:10px 0 8px;font-size:1.08rem}
+.stage p{font-size:0.88rem;color:var(--text-dim);line-height:1.55}
+.stage .ico{
+  position:absolute;top:24px;right:20px;
+  width:36px;height:36px;border-radius:10px;display:grid;place-items:center;
+  background:rgba(255,154,31,0.1);color:var(--brand);
+}
+
+.pipeline-arrow{
+  display:none;
+}
+@media (min-width:1025px){
+  .pipeline::before{
+    content:"";position:absolute;top:50%;left:8%;right:8%;height:1px;
+    background:linear-gradient(90deg,transparent,var(--brand),var(--accent),transparent);
+    opacity:0.25;z-index:-1;
+  }
+}
+
+/* =========================================================
+   WORKFLOW
+   ========================================================= */
+.workflow{
+  display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;
+}
+@media (max-width:1024px){.workflow{grid-template-columns:1fr}}
+
+.wf-list{display:grid;gap:14px}
+.wf-item{
+  padding:22px 24px;border-radius:var(--radius-md);
+  background:var(--surface);border:1px solid var(--border);
+  display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;
+  transition:all .3s ease;cursor:default;
+}
+.wf-item:hover{border-color:var(--border-strong);background:var(--surface-2);transform:translateX(6px)}
+.wf-item .step{
+  width:44px;height:44px;border-radius:12px;
+  background:var(--grad-1);color:#1a1004;
+  display:grid;place-items:center;font-weight:700;font-family:'Space Grotesk',sans-serif;
+}
+.wf-item h4{font-size:1.04rem;margin-bottom:4px}
+.wf-item p{font-size:0.9rem;color:var(--text-dim)}
+
+.wf-viz{
+  position:relative;padding:32px;border-radius:var(--radius-lg);
+  background:linear-gradient(180deg,rgba(124,92,255,0.06),rgba(34,211,238,0.04));
+  border:1px solid var(--border-strong);
+  min-height:420px;display:flex;flex-direction:column;justify-content:space-between;gap:16px;
+}
+.wf-node{
+  padding:14px 16px;border-radius:12px;
+  background:rgba(15,17,24,0.7);border:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;font-size:0.88rem;
+}
+.wf-node .d{
+  width:34px;height:34px;border-radius:9px;background:var(--grad-2);
+  display:grid;place-items:center;color:#06070b;
+}
+.wf-node strong{color:#fff;font-weight:600}
+.wf-node span{color:var(--text-mute);font-family:'JetBrains Mono',monospace;font-size:0.78rem;margin-left:auto}
+.wf-arrow{
+  width:2px;height:18px;margin-left:34px;
+  background:linear-gradient(180deg,var(--accent),transparent);
+}
+
+/* =========================================================
+   METRICS MONITORED
+   ========================================================= */
+.metrics-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:18px;
+}
+@media (max-width:900px){.metrics-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.metrics-grid{grid-template-columns:1fr}}
+
+.metric{
+  padding:22px;border-radius:var(--radius-md);
+  background:var(--surface);border:1px solid var(--border);
+  display:flex;align-items:flex-start;gap:14px;transition:all .3s ease;
+}
+.metric:hover{border-color:var(--border-strong);background:var(--surface-2);transform:translateY(-3px)}
+.metric .ico{
+  width:42px;height:42px;border-radius:11px;flex-shrink:0;
+  display:grid;place-items:center;background:rgba(255,154,31,0.1);color:var(--brand);
+}
+.metric:nth-child(3n+2) .ico{background:rgba(124,92,255,0.12);color:var(--accent)}
+.metric:nth-child(3n+3) .ico{background:rgba(34,211,238,0.12);color:var(--accent-2)}
+.metric h4{font-size:1rem;margin-bottom:4px}
+.metric p{font-size:0.88rem;color:var(--text-dim)}
+
+/* =========================================================
+   FEATURES
+   ========================================================= */
+.features-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:20px;
+}
+@media (max-width:1024px){.features-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:680px){.features-grid{grid-template-columns:1fr}}
+
+.feature{
+  padding:30px;border-radius:var(--radius-lg);
+  background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01));
+  border:1px solid var(--border);position:relative;overflow:hidden;
+  transition:all .3s ease;
+}
+.feature:hover{border-color:var(--border-strong);transform:translateY(-4px)}
+.feature::before{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(400px circle at var(--mx,50%) var(--my,0%),rgba(255,154,31,0.08),transparent 40%);
+  opacity:0;transition:opacity .3s ease;pointer-events:none;
+}
+.feature:hover::before{opacity:1}
+.feature .ico{
+  width:52px;height:52px;border-radius:14px;display:grid;place-items:center;
+  background:var(--grad-1);color:#1a1004;font-size:1.3rem;margin-bottom:20px;
+  box-shadow:0 10px 30px rgba(255,94,58,0.25);
+}
+.feature:nth-child(2) .ico{background:var(--grad-2);color:#06070b;box-shadow:0 10px 30px rgba(124,92,255,0.25)}
+.feature:nth-child(3) .ico{background:var(--grad-3);color:#1a1004}
+.feature:nth-child(4) .ico{background:var(--grad-2);color:#06070b}
+.feature:nth-child(5) .ico{background:var(--grad-3)}
+.feature:nth-child(6) .ico{background:var(--grad-1);color:#1a1004}
+
+.feature h3{margin-bottom:10px;font-size:1.18rem}
+.feature p{font-size:0.92rem;line-height:1.65}
+.feature .tag{
+  display:inline-block;margin-top:16px;padding:4px 10px;border-radius:6px;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace;font-size:0.74rem;color:var(--text-dim);
+}
+
+/* =========================================================
+   INSIGHTS
+   ========================================================= */
+.insights{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:22px;
+}
+@media (max-width:900px){.insights{grid-template-columns:1fr}}
+.insight{
+  padding:28px;border-radius:var(--radius-lg);
+  background:var(--surface);border:1px solid var(--border);
+  position:relative;overflow:hidden;
+}
+.insight .head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.insight .head .badge{
+  padding:4px 10px;border-radius:999px;font-size:0.72rem;font-weight:600;
+  background:rgba(52,211,153,0.12);color:var(--success);letter-spacing:0.06em;
+}
+.insight .head .ico{
+  width:38px;height:38px;border-radius:10px;display:grid;place-items:center;
+  background:rgba(255,154,31,0.12);color:var(--brand);
+}
+.insight h3{font-size:1.14rem;margin-bottom:10px}
+.insight p{font-size:0.95rem;line-height:1.65}
+.insight .stat{
+  font-family:'Space Grotesk',sans-serif;font-size:2.2rem;font-weight:700;
+  background:var(--grad-text);-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  display:block;margin-top:14px;letter-spacing:-0.02em;
+}
+
+/* =========================================================
+   SKILLS
+   ========================================================= */
+.skills-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:16px;
+}
+@media (max-width:900px){.skills-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:480px){.skills-grid{grid-template-columns:1fr}}
+
+.skill{
+  padding:20px;border-radius:var(--radius-md);
+  background:var(--surface);border:1px solid var(--border);
+  display:flex;flex-direction:column;gap:6px;transition:all .3s ease;
+}
+.skill:hover{border-color:var(--brand);transform:translateY(-3px)}
+.skill .top{display:flex;align-items:center;gap:10px}
+.skill .top i{color:var(--brand);font-size:1rem}
+.skill h4{font-size:0.98rem}
+.skill .bar{
+  height:6px;border-radius:999px;background:rgba(255,255,255,0.06);overflow:hidden;margin-top:10px;
+}
+.skill .bar i{
+  display:block;height:100%;background:var(--grad-1);border-radius:999px;
+  width:0;transition:width 1.2s cubic-bezier(.2,.8,.2,1);
+}
+.skill .lvl{font-size:0.76rem;color:var(--text-mute);font-family:'JetBrains Mono',monospace;margin-top:6px}
+
+/* =========================================================
+   TOOLS
+   ========================================================= */
+.tools-grid{
+  display:grid;grid-template-columns:repeat(6,1fr);gap:14px;
+}
+@media (max-width:900px){.tools-grid{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:480px){.tools-grid{grid-template-columns:repeat(2,1fr)}}
+
+.tool{
+  padding:22px 16px;border-radius:var(--radius-md);
+  background:var(--surface);border:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  text-align:center;transition:all .3s ease;
+  aspect-ratio:1/1;
+}
+.tool:hover{border-color:var(--brand);background:var(--surface-2);transform:translateY(-3px) rotate(-1deg)}
+.tool .ico{
+  width:46px;height:46px;border-radius:12px;display:grid;place-items:center;
+  background:rgba(255,154,31,0.1);color:var(--brand);font-size:1.4rem;
+}
+.tool:nth-child(2n) .ico{background:rgba(124,92,255,0.12);color:var(--accent)}
+.tool:nth-child(3n) .ico{background:rgba(34,211,238,0.12);color:var(--accent-2)}
+.tool h4{font-size:0.86rem;font-weight:600}
+.tool span{font-size:0.72rem;color:var(--text-mute);font-family:'JetBrains Mono',monospace}
+
+/* =========================================================
+   IMPACT
+   ========================================================= */
+.impact-wrap{
+  padding:60px;border-radius:var(--radius-xl);
+  background:linear-gradient(135deg,rgba(255,154,31,0.08),rgba(124,92,255,0.06));
+  border:1px solid var(--border-strong);position:relative;overflow:hidden;
+}
+.impact-wrap::before{
+  content:"";position:absolute;top:-50%;right:-20%;width:600px;height:600px;border-radius:50%;
+  background:radial-gradient(circle,var(--brand),transparent 70%);opacity:0.12;
+  filter:blur(80px);
+}
+@media (max-width:680px){.impact-wrap{padding:36px 24px}}
+
+.impact-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:28px;position:relative;z-index:1;
+}
+@media (max-width:900px){.impact-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:480px){.impact-grid{grid-template-columns:1fr}}
+
+.impact{text-align:left}
+.impact .num{
+  font-family:'Space Grotesk',sans-serif;font-size:3.6rem;font-weight:700;
+  background:var(--grad-text);-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  letter-spacing:-0.04em;line-height:1;
+}
+.impact .lbl{font-size:0.84rem;color:var(--text-mute);text-transform:uppercase;letter-spacing:0.1em;margin-top:10px}
+.impact p{font-size:0.92rem;margin-top:10px;color:var(--text-dim)}
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+footer{padding:80px 0 36px;border-top:1px solid var(--border);background:var(--bg-1);position:relative}
+.foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:48px;margin-bottom:48px}
+@media (max-width:900px){.foot-grid{grid-template-columns:1fr 1fr;gap:36px}}
+@media (max-width:560px){.foot-grid{grid-template-columns:1fr}}
+
+.foot-brand p{font-size:0.94rem;color:var(--text-dim);max-width:340px;margin-top:14px}
+.foot-col h5{font-size:0.78rem;text-transform:uppercase;letter-spacing:0.14em;color:var(--text-mute);margin-bottom:16px;font-family:'Inter',sans-serif;font-weight:600}
+.foot-col ul{display:grid;gap:10px}
+.foot-col a{font-size:0.92rem;color:var(--text-dim);transition:color .2s ease}
+.foot-col a:hover{color:#fff}
+
+.foot-bottom{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:18px;
+  padding-top:30px;border-top:1px solid var(--border);
+}
+.foot-bottom p{font-size:0.86rem;color:var(--text-mute)}
+.socials{display:flex;gap:10px}
+.socials a{
+  width:38px;height:38px;border-radius:10px;display:grid;place-items:center;
+  background:var(--surface);border:1px solid var(--border);
+  transition:all .2s ease;color:var(--text-dim);
+}
+.socials a:hover{background:var(--grad-1);color:#1a1004;border-color:transparent;transform:translateY(-3px)}
+
+/* =========================================================
+   REVEAL ANIMATIONS
+   ========================================================= */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.8,.2,1)}
+.reveal.in{opacity:1;transform:translateY(0)}
+.reveal[data-delay="100"]{transition-delay:.1s}
+.reveal[data-delay="200"]{transition-delay:.2s}
+.reveal[data-delay="300"]{transition-delay:.3s}
+.reveal[data-delay="400"]{transition-delay:.4s}
+.reveal[data-delay="500"]{transition-delay:.5s}
+
+/* Section label divider */
+.divider{
+  height:1px;background:linear-gradient(90deg,transparent,var(--border-strong),transparent);
+  margin:0 auto;width:100%;
+}
+
+/* Scroll progress */
+.scroll-progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:var(--grad-1);z-index:101;transition:width .1s ease;
+}
+
+/* Cursor glow */
+.cursor-glow{
+  position:fixed;width:340px;height:340px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,154,31,0.16),transparent 60%);
+  pointer-events:none;z-index:-1;
+  transform:translate(-50%,-50%);
+  transition:opacity .3s ease;
+  mix-blend-mode:screen;
+}
+
+/* Print fallback */
+@media print{
+  .nav,.cursor-glow,.orb,.bg-grid,.bg-noise{display:none !important}
+  body{background:#fff;color:#000}
+}
+
+/* Mobile tuning */
+@media (max-width:560px){
+  section{padding:80px 0}
+  .container{padding:0 20px}
+  .hero{padding:140px 0 60px}
+  .hero h1{font-size:2.4rem}
+  .impact-wrap{padding:32px 22px}
+  .exec-card{padding:24px}
+  .feature{padding:24px}
+}
+</style>
+</head>
+<body>
+
+<!-- Background scene -->
+<div class="bg-scene"></div>
+<div class="bg-grid"></div>
+<div class="bg-noise"></div>
+<div class="orb o1"></div>
+<div class="orb o2"></div>
+<div class="orb o3"></div>
+<div class="cursor-glow" id="cursorGlow"></div>
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<!-- ========================= NAV ========================= -->
+<nav class="nav" id="nav">
+  <div class="container nav-inner">
+    <a href="#top" class="brand">
+      <span class="brand-mark"><i class="fa-solid fa-chart-column"></i></span>
+      <div class="brand-name">Amazon<span>·Analytics</span></div>
+    </a>
+
+    <div class="nav-links">
+      <a href="#showcase">Dashboard</a>
+      <a href="#summary">Summary</a>
+      <a href="#kpis">KPIs</a>
+      <a href="#pipeline">Pipeline</a>
+      <a href="#features">Features</a>
+      <a href="#insights">Insights</a>
+      <a href="#skills">Skills</a>
+      <a href="#impact">Impact</a>
+    </div>
+
+    <div class="nav-cta">
+      <a href="#showcase" class="btn btn-ghost"><i class="fa-brands fa-github"></i> Repository</a>
+      <a href="#showcase" class="btn btn-primary">View Dashboard <i class="fa-solid fa-arrow-right arrow"></i></a>
+      <button class="menu-toggle" id="menuToggle" aria-label="Open menu"><i class="fa-solid fa-bars"></i></button>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <button class="close" id="menuClose"><i class="fa-solid fa-xmark"></i></button>
+  <a href="#showcase">Dashboard</a>
+  <a href="#summary">Summary</a>
+  <a href="#kpis">KPIs</a>
+  <a href="#pipeline">Pipeline</a>
+  <a href="#features">Features</a>
+  <a href="#insights">Insights</a>
+  <a href="#skills">Skills</a>
+  <a href="#impact">Impact</a>
+</div>
+
+<!-- ========================= HERO ========================= -->
+<header class="hero" id="top">
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <span class="hero-badge reveal">
+          <span class="pill">v2.4</span>
+          Executive-grade Amazon Sales Analytics
+        </span>
+
+        <h1 class="reveal" data-delay="100">
+          Turning raw <span class="gradient-text">Amazon orders</span><br/>
+          into <span class="stroke">decisions</span> that move the <span class="gradient-text">P&amp;L</span>.
+        </h1>
+
+        <p class="hero-sub reveal" data-delay="200">
+          A production-quality sales intelligence dashboard built in Excel — engineered with a
+          repeatable cleaning pipeline, executive KPIs, and storytelling visuals modeled after
+          Tableau, Power BI, Datadog and Stripe Analytics.
+        </p>
+
+        <div class="hero-cta reveal" data-delay="300">
+          <a href="#showcase" class="btn btn-primary">Explore the dashboard <i class="fa-solid fa-arrow-right arrow"></i></a>
+          <a href="#summary" class="btn btn-ghost"><i class="fa-solid fa-play"></i> Watch the story</a>
+        </div>
+
+        <div class="hero-stats reveal" data-delay="400">
+          <div class="hero-stat">
+            <div class="val" data-counter="32.87" data-prefix="$" data-suffix="M">$0</div>
+            <div class="lbl">Revenue Tracked</div>
+          </div>
+          <div class="hero-stat">
+            <div class="val" data-counter="42" data-suffix="+">0</div>
+            <div class="lbl">Live Metrics</div>
+          </div>
+          <div class="hero-stat">
+            <div class="val" data-counter="99.6" data-suffix="%" data-decimals="1">0</div>
+            <div class="lbl">Data Accuracy</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero visual -->
+      <div class="hero-visual reveal" data-delay="200">
+        <div class="float-card fc1">
+          <div class="icon"><i class="fa-solid fa-bolt"></i></div>
+          <div>
+            <div class="t">Realtime</div>
+            <div class="v">+18.4% MoM</div>
+          </div>
+        </div>
+
+        <div class="hero-card">
+          <div class="hc-head">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <div class="lbl">amazon-sales-dashboard · v2.4</div>
+          </div>
+
+          <div class="hc-grid">
+            <div class="hc-kpi">
+              <div class="lbl">Total Revenue</div>
+              <div class="val">$32.87M</div>
+              <div class="chg up"><i class="fa-solid fa-arrow-up"></i> 12.8%</div>
+            </div>
+            <div class="hc-kpi">
+              <div class="lbl">Orders</div>
+              <div class="val">50k</div>
+              <div class="chg up"><i class="fa-solid fa-arrow-up"></i> 9.1%</div>
+            </div>
+            <div class="hc-kpi">
+              <div class="lbl">AOV</div>
+              <div class="val">$657.33</div>
+              <div class="chg up"><i class="fa-solid fa-arrow-down"></i> 3.4%</div>
+            </div>
+          </div>
+
+          <div class="hc-chart">
+            <svg viewBox="0 0 320 130" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#ff9a1f" stop-opacity="0.5"/>
+                  <stop offset="100%" stop-color="#ff9a1f" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#ffd166"/>
+                  <stop offset="50%" stop-color="#ff9a1f"/>
+                  <stop offset="100%" stop-color="#ff5e3a"/>
+                </linearGradient>
+              </defs>
+              <line class="axis" x1="0" y1="32" x2="320" y2="32"/>
+              <line class="axis" x1="0" y1="65" x2="320" y2="65"/>
+              <line class="axis" x1="0" y1="98" x2="320" y2="98"/>
+              <path class="area" d="M0,90 C30,80 50,60 80,55 C110,50 130,70 160,60 C190,50 210,30 240,28 C270,26 290,40 320,32 L320,130 L0,130 Z"/>
+              <path class="line" d="M0,90 C30,80 50,60 80,55 C110,50 130,70 160,60 C190,50 210,30 240,28 C270,26 290,40 320,32"/>
+            </svg>
+          </div>
+
+          <div class="hc-foot">
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+          </div>
+        </div>
+
+        <div class="float-card fc2">
+          <div class="icon"><i class="fa-solid fa-circle-check"></i></div>
+          <div>
+            <div class="t">Data Quality</div>
+            <div class="v">99.6% clean</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="trust">
+      <div class="trust-label">Engineered with industry-standard analytics [By Aakif Altaf ]</div>
+      <div class="marquee">
+        <span><i class="fa-solid fa-chart-line"></i> Tableau-grade storytelling</span>
+        <span><i class="fa-solid fa-database"></i> Star-schema modelling</span>
+        <span><i class="fa-solid fa-broom"></i> ETL hygiene</span>
+        <span><i class="fa-solid fa-gauge-high"></i> Datadog-style monitoring</span>
+        <span><i class="fa-solid fa-credit-card"></i> Stripe-style KPI hierarchy</span>
+        <span><i class="fa-solid fa-eye"></i> Executive readability</span>
+        <span><i class="fa-solid fa-chart-line"></i> Tableau-grade storytelling</span>
+        <span><i class="fa-solid fa-database"></i> Star-schema modelling</span>
+        <span><i class="fa-solid fa-broom"></i> ETL hygiene</span>
+        <span><i class="fa-solid fa-gauge-high"></i> Datadog-style monitoring</span>
+        <span><i class="fa-solid fa-credit-card"></i> Stripe-style KPI hierarchy</span>
+        <span><i class="fa-solid fa-eye"></i> Executive readability</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ========================= DASHBOARD SHOWCASE ========================= -->
+<section id="showcase">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow"><span class="dot"></span> Dashboard Showcase</span>
+      <h2>The complete <span class="gradient-text">analytics experience</span>, presented like a product.</h2>
+      <p class="lead">Below is the live snapshot of the Amazon Sales Dashboard. Replace the image URL with your own export — the framing, glow and chrome stay the same.</p>
+    </div>
+
+    <div class="tabs reveal" data-delay="100">
+      <button class="tab active" data-tab="overview">Overview</button>
+      <button class="tab" data-tab="revenue">Revenue Breakdown</button>
+      <button class="tab" data-tab="products">Product Mix</button>
+      <button class="tab" data-tab="geo">Geographic View</button>
+      <button class="tab" data-tab="returns">Returns &amp; Risk</button>
+    </div>
+
+    <div class="showcase-frame reveal" data-delay="200">
+      <div class="frame-bar">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <div class="url"><i class="fa-solid fa-lock"></i> portfolio.analytics/amazon-sales/<span style="color:#ff9a1f" id="urlTab">overview</span></div>
+        <div class="meta">Last refresh · 2 min ago</div>
+      </div>
+
+      <div class="dashboard-img-wrap">
+        <!-- 👉 REPLACE the src below with your dashboard screenshot URL -->
+        <img id="dashboardImg" src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1600&q=80" alt="Amazon Sales Dashboard preview" onerror="this.style.display='none';document.getElementById('imgFallback').style.display='grid'" />
+        <div id="imgFallback" class="placeholder" style="display:none">
+          <div class="pic"><i class="fa-solid fa-image"></i></div>
+          <h4>Dashboard image goes here</h4>
+          <p>Drop your exported dashboard screenshot URL into the <code>&lt;img id="dashboardImg"&gt;</code> tag.</p>
+          <code>id="dashboardImg" → src="YOUR_IMAGE_URL"</code>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= EXECUTIVE SUMMARY ========================= -->
+<section id="summary">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow"><span class="dot"></span> Executive Summary</span>
+      <h2>A board-room view of <span class="gradient-text">what's working</span> and what isn't.</h2>
+      <p class="lead">The dashboard answers the three questions every leadership team asks first: Where is revenue coming from, what's accelerating it, and what's silently leaking margin?</p>
+    </div>
+
+    <div class="exec-grid">
+      <div class="exec-card reveal">
+        <h3>The narrative behind the numbers</h3>
+        <p>This project takes a raw Amazon orders dataset — with messy timestamps, inconsistent SKU naming, fragmented buyer addresses, and partial returns — and refines it into a clean, executive-ready intelligence layer. Every chart, filter and KPI is engineered to answer a real business question rather than to look decorative.</p>
+        <div class="exec-quote">
+          The goal wasn't to build a prettier spreadsheet — it was to build a decision surface that a CEO, a category manager, and a warehouse lead could each open and walk away with the right next action.
+        </div>
+      </div>
+
+      <div class="reveal" data-delay="200">
+        <ul class="exec-list">
+          <li><span class="b"><i class="fa-solid fa-bullseye"></i></span><div><strong>Audience-first design</strong><span>Top KPIs answer C-level questions; drilldowns serve ops and category managers.</span></div></li>
+          <li><span class="b"><i class="fa-solid fa-layer-group"></i></span><div><strong>Layered storytelling</strong><span>Five linked views progress from “what happened” → “why” → “what next”.</span></div></li>
+          <li><span class="b"><i class="fa-solid fa-shield"></i></span><div><strong>Trustworthy data</strong><span>A documented cleaning pipeline keeps numbers consistent across refreshes.</span></div></li>
+          <li><span class="b"><i class="fa-solid fa-repeat"></i></span><div><strong>Repeatable</strong><span>New monthly exports drop in without touching formulas or layouts.</span></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= KPI HIGHLIGHTS ========================= -->
+<section id="kpis">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow"><span class="dot"></span> KPI Highlights</span>
+      <h2>The <span class="gradient-text">north-star metrics</span> at a glance.</h2>
+      <p class="lead">Top-line indicators are aligned with how Amazon's own seller central thinks about performance — revenue, units, conversion, and unit economics.</p>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi reveal">
+        <div class="ico"><i class="fa-solid fa-sack-dollar"></i></div>
+        <div class="val" data-counter="32.8" data-suffix="M" data-prefix="$">$0</div>
+        <div class="lbl">Gross Revenue</div>
+        <p class="desc">Total order value across the analyzed period, net of cancellations.</p>
+        <span class="delta"><i class="fa-solid fa-arrow-up"></i> 12.8% vs prior</span>
+      </div>
+      <div class="kpi reveal" data-delay="100">
+        <div class="ico"><i class="fa-solid fa-cart-shopping"></i></div>
+        <div class="val" data-counter="50K" data-suffix="K">0</div>
+        <div class="lbl">Orders Shipped</div>
+        <p class="desc">Successful order fulfilments across all categories and geographies.</p>
+        <span class="delta"><i class="fa-solid fa-arrow-up"></i> 9.1% growth</span>
+      </div>
+      <div class="kpi reveal" data-delay="200">
+        <div class="ico"><i class="fa-solid fa-coins"></i></div>
+        <div class="val" data-counter="657.33" data-prefix="$" data-decimals="2">$0</div>
+        <div class="lbl">Average Order Value</div>
+        <p class="desc">Indicator of basket size and pricing power across SKUs.</p>
+        <span class="delta" style="background:rgba(248,113,113,0.12);color:var(--danger)"><i class="fa-solid fa-arrow-up"></i> 2.4% improved</span>
+      </div>
+      <div class="kpi reveal" data-delay="300">
+        <div class="ico"><i class="fa-solid fa-rotate-left"></i></div>
+        <div class="val" data-counter="3.85" data-suffix="%" data-decimals="1">0%</div>
+        <div class="lbl">Return Rate</div>
+        <p class="desc">Tracks fulfilment quality and product-market fit by category.</p>
+        <span class="delta" style="background:rgba(52,211,153,0.12);color:var(--success)"><i class="fa-solid fa-arrow-down"></i> 0.9 pts improved</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= DATA CLEANING PIPELINE ========================= -->
+<section id="pipeline">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow"><span class="dot"></span> Data Cleaning Pipeline</span>
+      <h2>From <span class="gradient-text">messy exports</span> to a single source of truth.</h2>
+      <p class="lead">A five-stage refinement process applied to every monthly Amazon export — engineered for reliability, not for one-off heroics.</p>
+    </div>
+
+    <div class="pipeline">
+      <div class="stage reveal">
+        <div class="ico"><i class="fa-solid fa-download"></i></div>
+        <div class="num">STAGE / 01</div>
+        <h4>Ingest</h4>
+        <p>Raw Amazon order CSVs imported with consistent schema and lineage tags.</p>
+      </div>
+      <div class="stage reveal" data-delay="100">
+        <div class="ico"><i class="fa-solid fa-broom"></i></div>
+        <div class="num">STAGE / 02</div>
+        <h4>Clean</h4>
+        <p>Whitespace, casing, duplicate orders, and broken timestamps standardized.</p>
+      </div>
+      <div class="stage reveal" data-delay="200">
+        <div class="ico"><i class="fa-solid fa-shapes"></i></div>
+        <div class="num">STAGE / 03</div>
+        <h4>Model</h4>
+        <p>Orders, products, customers, geography split into linked reference tables.</p>
+      </div>
+      <div class="stage reveal" data-delay="300">
+        <div class="ico"><i class="fa-solid fa-calculator"></i></div>
+        <div class="num">STAGE / 04</div>
+        <h4>Enrich</h4>
+        <p>Derived columns: AOV, margin, cohort month, returns flag, ABC classification.</p>
+      </div>
+      <div class="stage reveal" data-delay="400">
+        <div class="ico"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="num">STAGE / 05</div>
+        <h4>Validate</h4>
+        <p>Row counts, totals and referential integrity reconciled before publishing.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= WORKFLOW ========================= -->
+<section id="workflow">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow"><span class="dot"></span> Data Processing Workflow</span>
+      <h2>How a single click <span class="gradient-text">refreshes the entire dashboard</span>.</h2>
+      <p class="lead">Built to be operated by a non-technical analyst — drop in the new file, hit refresh, and the model rebuilds itself end-to-end.</p>
+    </div>
+
+    <div class="workflow">
+      <div class="wf-list">
+        <div class="wf-item reveal"><span class="step">1</span><div><h4>Drop new export</h4><p>Place the latest Amazon report into the staging folder — naming is preserved.</p></div></div>
+        <div class="wf-item reveal" data-delay="100"><span class="step">2</span><div><h4>Power Query transforms</h4><p>Cleaning rules apply automatically: trims, type coercion, deduping, joins.</p></div></div>
+        <div class="wf-item reveal" data-delay="200"><span class="step">3</span><div><h4>Data model refresh</h4><p>Linked tables relink — Orders ↔ Products ↔ Geography ↔ Customers.</p></div></div>
+        <div class="wf-item reveal" data-delay="300"><span class="step">4</span><div><h4>Pivot &amp; measure recalc</h4><p>Pivots, slicers, conditional formats and KPI cards update in one pass.</p></div></div>
+        <div class="wf-item reveal" data-delay="400"><span class="step">5</span><div><h4>Publish to executives</h4><p>Single static file shared — every viewer sees identical, version-stable numbers.</p></div></div>
+      </div>
+
+      <div class="wf-viz reveal" data-delay="200">
+        <div class="wf-node"><div class="d"><i class="fa-solid fa-file-csv"></i></div><strong>amazon_orders_2025.csv</strong><span>1.2 MB</span></div>
+        <div class="wf-arrow"></div>
+        <div class="wf-node"><div class="d"><i class="fa-solid fa-filter"></i></div><strong>Power Query · Clean &amp; Shape</strong><span>14 steps</span></div>
+        <div class="wf-arrow"></div>
+        <div class="wf-node"><div class="d"><i class="fa-solid fa-diagram-project"></i></div><strong>Data Model · Relationships</strong><span>4 tables</span></div>
+        <div class="wf-arrow"></div>
+        <div class="wf-node"><div class="d"><i class="fa-solid fa-table-cells-large"></i></div><strong>Pivots &amp; KPIs Refresh</strong><span>27 measures</span></div>
+        <div class="wf-arrow"></div>
+        <div class="wf-node"><div class="d"><i class="fa-solid fa-chart-pie"></i></div><strong>Dashboard Published</strong><span>3.1s</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= METRICS MONITORED ========================= -->
+<section id="metrics">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow"><span class="dot"></span> Business Metrics Monitored</span>
+      <h2>Every metric a <span class="gradient-text">category manager</span> would ask for.</h2>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric reveal"><div class="ico"><i class="fa-solid fa-sack-dollar"></i></div><div><h4>Gross &amp; Net Revenue</h4><p>Top-line revenue with cancellation &amp; refund adjustment.</p></div></div>
+      <div class="metric reveal" data-delay="50"><div class="ico"><i class="fa-solid fa-cart-shopping"></i></div><div><h4>Order Volume</h4><p>Daily, weekly and monthly fulfilment patterns.</p></div></div>
+      <div class="metric reveal" data-delay="100"><div class="ico"><i class="fa-solid fa-tag"></i></div><div><h4>Average Order Value</h4><p>Basket size dynamics across SKUs.</p></div></div>
+      <div class="metric reveal" data-delay="150"><div class="ico"><i class="fa-solid fa-box"></i></div><div><h4>Units per Order</h4><p>Cross-sell strength and bundle effectiveness.</p></div></div>
+      <div class="metric reveal" data-delay="200"><div class="ico"><i class="fa-solid fa-arrow-trend-up"></i></div><div><h4>Top SKU Performance</h4><p>Best-selling items by revenue and margin.</p></div></div>
+      <div class="metric reveal" data-delay="250"><div class="ico"><i class="fa-solid fa-percent"></i></div><div><h4>Return Rate</h4><p>Quality and fit signal by category.</p></div></div>
+      <div class="metric reveal" data-delay="300"><div class="ico"><i class="fa-solid fa-earth-asia"></i></div><div><h4>Geographic Mix</h4><p>State-level demand distribution.</p></div></div>
+      <div class="metric reveal" data-delay="350"><div class="ico"><i class="fa-solid fa-truck-fast"></i></div><div><h4>Fulfilment Channel</h4><p>FBA vs FBM share and performance.</p></div></div>
+      <div class="metric reveal" data-delay="400"><div class="ico"><i class="fa-solid fa-user-group"></i></div><div><h4>Customer Cohorts</h4><p>Repeat purchase behaviour over time.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= FEATURES ========================= -->
+<section id="features">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow"><span class="dot"></span> Analytics Features</span>
+      <h2>Built like a product, not a <span class="gradient-text">PDF report</span>.</h2>
+      <p class="lead">Each feature is borrowed from a class of analytics tool — adapted for Excel and tuned for storytelling.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature reveal">
+        <div class="ico"><i class="fa-solid fa-gauge-high"></i></div>
+        <h3>Executive KPI Strip</h3>
+        <p>A sticky top row of north-star KPIs with deltas — designed to be readable in five seconds, just like Stripe Analytics.</p>
+        <span class="tag">// kpi-strip.layer</span>
+      </div>
+      <div class="feature reveal" data-delay="100">
+        <div class="ico"><i class="fa-solid fa-chart-line"></i></div>
+        <h3>Trend Storytelling</h3>
+        <p>Time-series visuals with reference bands and YoY overlays show momentum and seasonality at one glance.</p>
+        <span class="tag">// trend.module</span>
+      </div>
+      <div class="feature reveal" data-delay="200">
+        <div class="ico"><i class="fa-solid fa-sliders"></i></div>
+        <h3>Interactive Slicers</h3>
+        <p>Slice by category, channel, geography or month — every chart and KPI reacts in lockstep.</p>
+        <span class="tag">// slicers.engine</span>
+      </div>
+      <div class="feature reveal" data-delay="300">
+        <div class="ico"><i class="fa-solid fa-map-location-dot"></i></div>
+        <h3>Geographic Heatmap</h3>
+        <p>State-level revenue intensity gives instant visual cues on where to push and where to defend.</p>
+        <span class="tag">// geo.heatmap</span>
+      </div>
+      <div class="feature reveal" data-delay="400">
+        <div class="ico"><i class="fa-solid fa-medal"></i></div>
+        <h3>SKU Leaderboard</h3>
+        <p>Top performers by revenue, margin, units and return rate — sortable, ranked, and styled.</p>
+        <span class="tag">// sku.leaderboard</span>
+      </div>
+      <div class="feature reveal" data-delay="500">
+        <div class="ico"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <h3>Risk &amp; Returns View</h3>
+        <p>Categories silently bleeding margin via returns surfaced with color-coded thresholds.</p>
+        <span class="tag">// risk.lens</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= INSIGHTS ========================= -->
+<section id="insights">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow"><span class="dot"></span> Business Insights</span>
+      <h2>The findings that actually <span class="gradient-text">moved a decision</span>.</h2>
+    </div>
+
+    <div class="insights">
+      <div class="insight reveal">
+        <div class="head"><div class="ico"><i class="fa-solid fa-arrow-trend-up"></i></div><span class="badge">Growth</span></div>
+        <h3>Top 5 SKUs drive 62% of revenue</h3>
+        <p>A classic long-tail signal — concentration risk is high, but also a clear inventory and ad-spend prioritization lever.</p>
+        <span class="stat">62%</span>
+      </div>
+      <div class="insight reveal" data-delay="100">
+        <div class="head"><div class="ico"><i class="fa-solid fa-calendar-week"></i></div><span class="badge" style="background:rgba(124,92,255,0.14);color:var(--accent)">Seasonality</span></div>
+        <h3>Weekend orders 38% above weekday average</h3>
+        <p>Ad scheduling and inventory buffers can be rebalanced toward Friday–Sunday windows.</p>
+        <span class="stat">+38%</span>
+      </div>
+      <div class="insight reveal" data-delay="200">
+        <div class="head"><div class="ico"><i class="fa-solid fa-rotate-left"></i></div><span class="badge" style="background:rgba(248,113,113,0.14);color:var(--danger)">Risk</span></div>
+        <h3>Apparel returns 2.7× higher than electronics</h3>
+        <p>Category-specific sizing guidance and improved product imagery have clear ROI here.</p>
+        <span class="stat">2.7×</span>
+      </div>
+      <div class="insight reveal" data-delay="300">
+        <div class="head"><div class="ico"><i class="fa-solid fa-earth-asia"></i></div><span class="badge" style="background:rgba(34,211,238,0.14);color:var(--accent-2)">Geography</span></div>
+        <h3>Three states contribute 47% of revenue</h3>
+        <p>Demand is regionally concentrated — opportunity for targeted regional promotions and warehouse placement.</p>
+        <span class="stat">47%</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= SKILLS ========================= -->
+<section id="skills">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow"><span class="dot"></span> Skills Demonstrated</span>
+      <h2>The <span class="gradient-text">craft underneath</span> the visuals.</h2>
+    </div>
+
+    <div class="skills-grid">
+      <div class="skill reveal"><div class="top"><i class="fa-solid fa-table"></i><h4>Excel · Pivots</h4></div><div class="bar"><i data-skill="95"></i></div><div class="lvl">EXPERT · 95%</div></div>
+      <div class="skill reveal" data-delay="50"><div class="top"><i class="fa-solid fa-filter"></i><h4>Power Query</h4></div><div class="bar"><i data-skill="90"></i></div><div class="lvl">ADVANCED · 90%</div></div>
+      <div class="skill reveal" data-delay="100"><div class="top"><i class="fa-solid fa-broom"></i><h4>Data Cleaning</h4></div><div class="bar"><i data-skill="93"></i></div><div class="lvl">EXPERT · 93%</div></div>
+      <div class="skill reveal" data-delay="150"><div class="top"><i class="fa-solid fa-diagram-project"></i><h4>Data Modelling</h4></div><div class="bar"><i data-skill="85"></i></div><div class="lvl">ADVANCED · 85%</div></div>
+      <div class="skill reveal" data-delay="200"><div class="top"><i class="fa-solid fa-chart-pie"></i><h4>Dashboard Design</h4></div><div class="bar"><i data-skill="92"></i></div><div class="lvl">EXPERT · 92%</div></div>
+      <div class="skill reveal" data-delay="250"><div class="top"><i class="fa-solid fa-lightbulb"></i><h4>Storytelling</h4></div><div class="bar"><i data-skill="88"></i></div><div class="lvl">ADVANCED · 88%</div></div>
+      <div class="skill reveal" data-delay="300"><div class="top"><i class="fa-solid fa-magnifying-glass-chart"></i><h4>Business Analysis</h4></div><div class="bar"><i data-skill="87"></i></div><div class="lvl">ADVANCED · 87%</div></div>
+      <div class="skill reveal" data-delay="350"><div class="top"><i class="fa-solid fa-code"></i><h4>DAX / Formulas</h4></div><div class="bar"><i data-skill="80"></i></div><div class="lvl">PROFICIENT · 80%</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= TOOLS ========================= -->
+<section id="tools">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow"><span class="dot"></span> Tools &amp; Stack Used</span>
+      <h2>A <span class="gradient-text">lean, sharpened</span> toolbox.</h2>
+    </div>
+
+    <div class="tools-grid">
+      <div class="tool reveal"><div class="ico"><i class="fa-solid fa-file-excel"></i></div><h4>Excel</h4><span>core</span></div>
+      <div class="tool reveal" data-delay="50"><div class="ico"><i class="fa-solid fa-filter"></i></div><h4>Power Query</h4><span>etl</span></div>
+      <div class="tool reveal" data-delay="100"><div class="ico"><i class="fa-solid fa-cube"></i></div><h4>Power Pivot</h4><span>model</span></div>
+      <div class="tool reveal" data-delay="150"><div class="ico"><i class="fa-solid fa-code"></i></div><h4>DAX</h4><span>measures</span></div>
+      <div class="tool reveal" data-delay="200"><div class="ico"><i class="fa-solid fa-chart-column"></i></div><h4>Pivot Charts</h4><span>visual</span></div>
+      <div class="tool reveal" data-delay="250"><div class="ico"><i class="fa-solid fa-sliders"></i></div><h4>Slicers</h4><span>filter</span></div>
+      <div class="tool reveal" data-delay="300"><div class="ico"><i class="fa-solid fa-palette"></i></div><h4>Conditional Format</h4><span>signal</span></div>
+      <div class="tool reveal" data-delay="350"><div class="ico"><i class="fa-solid fa-square-root-variable"></i></div><h4>Lookups</h4><span>joins</span></div>
+      <div class="tool reveal" data-delay="400"><div class="ico"><i class="fa-solid fa-file-csv"></i></div><h4>CSV Imports</h4><span>ingest</span></div>
+      <div class="tool reveal" data-delay="450"><div class="ico"><i class="fa-solid fa-table"></i></div><h4>Named Ranges</h4><span>refs</span></div>
+      <div class="tool reveal" data-delay="500"><div class="ico"><i class="fa-brands fa-github"></i></div><h4>GitHub</h4><span>versioning</span></div>
+      <div class="tool reveal" data-delay="550"><div class="ico"><i class="fa-solid fa-pen-ruler"></i></div><h4>Figma · Aesthetic</h4><span>design</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= IMPACT ========================= -->
+<section id="impact">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow"><span class="dot"></span> Project Impact</span>
+      <h2>The numbers behind the <span class="gradient-text">numbers</span>.</h2>
+      <p class="lead">Measurable outcomes from building, documenting and presenting this analytics work end-to-end.</p>
+    </div>
+
+    <div class="impact-wrap reveal">
+      <div class="impact-grid">
+        <div class="impact">
+          <div class="num" data-counter="85" data-suffix="%">0%</div>
+          <div class="lbl">Less Manual Effort</div>
+          <p>Monthly refresh effort reduced from hours to a single click via Power Query automation.</p>
+        </div>
+        <div class="impact">
+          <div class="num" data-counter="42" data-suffix="+">0</div>
+          <div class="lbl">Metrics Surfaced</div>
+          <p>Forty-plus business signals consolidated into a single decision surface.</p>
+        </div>
+        <div class="impact">
+          <div class="num" data-counter="3" data-suffix="×">0×</div>
+          <div class="lbl">Faster Decisions</div>
+          <p>Executive review time per cycle cut by ~3× compared to raw spreadsheet review.</p>
+        </div>
+        <div class="impact">
+          <div class="num" data-counter="99.6" data-suffix="%" data-decimals="1">0%</div>
+          <div class="lbl">Data Accuracy</div>
+          <p>Validation checks at every refresh keep figures audit-ready and trustworthy.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= FOOTER ========================= -->
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a href="#top" class="brand">
+          <span class="brand-mark"><i class="fa-solid fa-chart-column"></i></span>
+          <div class="brand-name">Amazon<span>·Analytics</span></div>
+        </a>
+        <p>A portfolio project showcasing an enterprise-grade Amazon Sales Dashboard — built in Excel, presented like a SaaS analytics product.</p>
+      </div>
+
+      <div class="foot-col">
+        <h5>Project</h5>
+        <ul>
+          <li><a href="#showcase">Dashboard</a></li>
+          <li><a href="#summary">Executive Summary</a></li>
+          <li><a href="#pipeline">Data Pipeline</a></li>
+          <li><a href="#insights">Business Insights</a></li>
+        </ul>
+      </div>
+
+      <div class="foot-col">
+        <h5>Capabilities</h5>
+        <ul>
+          <li><a href="#features">Analytics Features</a></li>
+          <li><a href="#skills">Skills</a></li>
+          <li><a href="#tools">Tools &amp; Stack</a></li>
+          <li><a href="#impact">Project Impact</a></li>
+        </ul>
+      </div>
+
+      <div class="foot-col">
+        <h5>Connect</h5>
+        <ul>
+          <li><a href="https://github.com/IAaqib78">View on GitHub</a></li>
+          <li><a href="#">Download .xlsx</a></li>
+          <li><a href="https://www.linkedin.com/in/aakif-altaf-94021a146/">LinkedIn Profile</a></li>
+          <li><a href="kmrtech99@gmail.com">Hire / Contact</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="foot-bottom">
+      <p>© <span id="yr"></span> · Amazon Sales Analytics · Portfolio Project. Built with HTML, CSS &amp; vanilla JS — no frameworks (BY Aakif Altaf).</p>
+      <div class="socials">
+        <a href="https://github.com/IAaqib78" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+        <a href="https://www.linkedin.com/in/aakif-altaf-94021a146/" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+        <a href="#" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+        <a href="kmrtech99@gmail.com" aria-label="Email"><i class="fa-solid fa-envelope"></i></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* =========================================================
+   NAV scroll state
+   ========================================================= */
+const nav = document.getElementById('nav');
+const progress = document.getElementById('scrollProgress');
+const onScroll = () => {
+  const y = window.scrollY;
+  nav.classList.toggle('scrolled', y > 20);
+  const h = document.documentElement.scrollHeight - window.innerHeight;
+  progress.style.width = Math.min(100,(y/h)*100) + '%';
+};
+window.addEventListener('scroll', onScroll, {passive:true});
+onScroll();
+
+/* =========================================================
+   Mobile menu
+   ========================================================= */
+const mobileMenu = document.getElementById('mobileMenu');
+document.getElementById('menuToggle').addEventListener('click',()=>mobileMenu.classList.add('open'));
+document.getElementById('menuClose').addEventListener('click',()=>mobileMenu.classList.remove('open'));
+mobileMenu.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>mobileMenu.classList.remove('open')));
+
+/* =========================================================
+   Cursor glow
+   ========================================================= */
+const glow = document.getElementById('cursorGlow');
+let glowVisible = false;
+window.addEventListener('mousemove',(e)=>{
+  if(!glowVisible){glow.style.opacity = 1; glowVisible = true;}
+  glow.style.left = e.clientX + 'px';
+  glow.style.top  = e.clientY + 'px';
+});
+window.addEventListener('mouseleave',()=>{glow.style.opacity=0;glowVisible=false});
+
+/* feature mouse position glow */
+document.querySelectorAll('.feature').forEach(f=>{
+  f.addEventListener('mousemove',e=>{
+    const r = f.getBoundingClientRect();
+    f.style.setProperty('--mx',((e.clientX-r.left)/r.width*100)+'%');
+    f.style.setProperty('--my',((e.clientY-r.top )/r.height*100)+'%');
+  });
+});
+
+/* =========================================================
+   Reveal on scroll
+   ========================================================= */
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(en=>{
+    if(en.isIntersecting){
+      en.target.classList.add('in');
+      io.unobserve(en.target);
+    }
+  });
+},{threshold:0.12,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* =========================================================
+   Animated counters
+   ========================================================= */
+const fmt = (v, decimals) => {
+  if(decimals>0) return v.toFixed(decimals);
+  return Math.round(v).toLocaleString();
+};
+const animateCounter = (el) => {
+  const target   = parseFloat(el.dataset.counter);
+  const prefix   = el.dataset.prefix || '';
+  const suffix   = el.dataset.suffix || '';
+  const decimals = parseInt(el.dataset.decimals || '0',10);
+  const duration = 1800;
+  const start = performance.now();
+  const tick = (now)=>{
+    const p = Math.min(1,(now-start)/duration);
+    const eased = 1 - Math.pow(1-p,3);
+    const val = target * eased;
+    let display = fmt(val, decimals);
+    if(suffix==='K' && target>=1000){
+      display = (val/1000).toFixed(1);
+    }
+    el.textContent = prefix + display + suffix;
+    if(p<1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+};
+const counterIO = new IntersectionObserver((ents)=>{
+  ents.forEach(en=>{
+    if(en.isIntersecting){animateCounter(en.target);counterIO.unobserve(en.target);}
+  });
+},{threshold:0.4});
+document.querySelectorAll('[data-counter]').forEach(el=>counterIO.observe(el));
+
+/* =========================================================
+   Skill bars
+   ========================================================= */
+const skillIO = new IntersectionObserver((ents)=>{
+  ents.forEach(en=>{
+    if(en.isIntersecting){
+      const v = en.target.dataset.skill;
+      en.target.style.width = v + '%';
+      skillIO.unobserve(en.target);
+    }
+  });
+},{threshold:0.4});
+document.querySelectorAll('[data-skill]').forEach(el=>skillIO.observe(el));
+
+/* =========================================================
+   Tabs
+   ========================================================= */
+const tabs = document.querySelectorAll('.tab');
+const urlTab = document.getElementById('urlTab');
+tabs.forEach(t=>{
+  t.addEventListener('click',()=>{
+    tabs.forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    urlTab.textContent = t.dataset.tab;
+  });
+});
+
+/* =========================================================
+   Year
+   ========================================================= */
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+/* =========================================================
+   Subtle parallax on hero card
+   ========================================================= */
+const heroCard = document.querySelector('.hero-card');
+if(heroCard){
+  const visual = document.querySelector('.hero-visual');
+  visual.addEventListener('mousemove',(e)=>{
+    const r = visual.getBoundingClientRect();
+    const px = (e.clientX - r.left)/r.width - 0.5;
+    const py = (e.clientY - r.top )/r.height - 0.5;
+    heroCard.style.transform = `rotateY(${-6 + px*6}deg) rotateX(${4 - py*6}deg) translateY(0)`;
+  });
+  visual.addEventListener('mouseleave',()=>{
+    heroCard.style.transform = '';
+  });
+}
+</script>
+</body>
+</html>
