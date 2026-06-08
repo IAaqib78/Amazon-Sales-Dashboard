@@ -5,7 +5,7 @@
   <img src="Amazon_sales_Dashboard.png" width="100%">
 </p>
 
-## 🚀 Live Demo
+ 
 
  
 
