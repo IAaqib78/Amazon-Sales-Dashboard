@@ -2,7 +2,7 @@
   
 
 <p align="center">
-  <img src="assets/dashboard.png" width="100%">
+  <img src="Amazon_sales_Dashboard.png" width="100%">
 </p>
 
 ## 🚀 Live Demo
