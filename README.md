@@ -42,4 +42,4 @@ Enterprise-grade Amazon Sales Analytics Dashboard designed for executive reporti
 
 ## 🌐 Interactive Website
 
-👉  https://iaaqib78.github.io/Amazon-Sales-Dashboard/
+👉 https://iaaqib78.github.io/Amazon-Sales-Dashboard/
